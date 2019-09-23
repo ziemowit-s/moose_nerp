@@ -1,6 +1,7 @@
 import inspect
 import logging
 
+
 class Message(object):
     def __init__(self, fmt, args):
         self.fmt = fmt
@@ -8,6 +9,7 @@ class Message(object):
 
     def __str__(self):
         return self.fmt.format(*self.args)
+
 
 class StyleAdapter(logging.LoggerAdapter):
     def __init__(self, logger, extra=None):
@@ -20,12 +22,16 @@ class StyleAdapter(logging.LoggerAdapter):
 
     def debug(self, *args, **kwargs):
         return self.log(logging.DEBUG, *args, **kwargs)
+
     def info(self, *args, **kwargs):
         return self.log(logging.INFO, *args, **kwargs)
+
     def warning(self, *args, **kwargs):
         return self.log(logging.WARNING, *args, **kwargs)
+
     def error(self, *args, **kwargs):
         return self.log(logging.ERROR, *args, **kwargs)
+
 
 def Logger(name=None):
     if name is None:
@@ -35,6 +41,6 @@ def Logger(name=None):
             name = mod.__name__
         else:
             name = '__main__'
-    FORMAT = '%(process)d - %(filename)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s' #SRIRAM 02152018
+    FORMAT = '%(process)d - %(filename)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s'  # SRIRAM 02152018
     logging.basicConfig(format=FORMAT)
     return StyleAdapter(logging.getLogger(name))

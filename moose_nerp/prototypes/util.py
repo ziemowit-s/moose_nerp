@@ -1,26 +1,30 @@
 from __future__ import division as _, print_function as _
-import sys as _sys
-import os as _os
-import numbers as _numbers
-from collections import OrderedDict as _OrderedDict
-from operator import itemgetter as _itemgetter, eq as _eq
-import numpy as _np
+
 import functools
-import moose
+import numbers as _numbers
+import os as _os
+import sys as _sys
+from collections import OrderedDict as _OrderedDict
+from operator import itemgetter as _itemgetter
 from subprocess import check_output
 
-def syn_name(synpath,headname):
+import moose
+import numpy as _np
+
+
+def syn_name(synpath, headname):
     if headname in synpath:
-        #try to strip out name of cell from branch name
-        headpath=moose.element(synpath).parent.path
-        parentname=moose.element(headpath).parent.name
-        postbranch=parentname+'/'+moose.element(headpath).name
+        # try to strip out name of cell from branch name
+        headpath = moose.element(synpath).parent.path
+        parentname = moose.element(headpath).parent.name
+        postbranch = parentname + '/' + moose.element(headpath).name
     else:
-        postbranch=moose.element(synpath).parent.name
+        postbranch = moose.element(synpath).parent.name
 
     return postbranch
 
-def neurontypes(param_cond,override=None):
+
+def neurontypes(param_cond, override=None):
     "Query or set names of neurontypes of each neurons to be created"
     if override is None:
         return param_cond.neurontypes if param_cond.neurontypes is not None else sorted(param_cond.Condset.keys())
@@ -29,6 +33,7 @@ def neurontypes(param_cond,override=None):
             raise ValueError('unknown neuron types requested')
         return override
 
+
 def inclusive_range(start, stop=None, step=None):
     if stop is None:
         stop = start
@@ -36,61 +41,63 @@ def inclusive_range(start, stop=None, step=None):
         return _np.array([start])
     if step is None:
         step = stop - start
-    return _np.arange(start, stop + step/2, step)
+    return _np.arange(start, stop + step / 2, step)
+
 
 def get_dist_name(comp):
     name = comp.name
     xloc = comp.x
     yloc = comp.y
     zloc = comp.z
-    dist = _np.sqrt(xloc*xloc+yloc*yloc+zloc*zloc)
-    return dist,name
+    dist = _np.sqrt(xloc * xloc + yloc * yloc + zloc * zloc)
+    return dist, name
+
 
 def distance_mapping(mapping, where):
-    #where is a location, either a compartment or string or moose.vec
+    # where is a location, either a compartment or string or moose.vec
     if isinstance(where, (moose.Compartment, moose.ZombieCompartment)):
-        comp=where
-    elif isinstance(where,moose.vec):
-        #Needs to be tested.  May need to loop over comps in moose.vec
+        comp = where
+    elif isinstance(where, moose.vec):
+        # Needs to be tested.  May need to loop over comps in moose.vec
         comp = moose.element(where)
-    elif isinstance(where,str):
+    elif isinstance(where, str):
         try:
-            comp =  moose.element(where)
+            comp = moose.element(where)
         except ValueError:
-            print('No element ',where)
+            print('No element ', where)
             return 0
     elif isinstance(where, _numbers.Number):
         name = ''
         dist = where
     else:
-        print('Wrong distance/element passed in distance mapping ',where)
+        print('Wrong distance/element passed in distance mapping ', where)
         return 0
-    #calculate distance of compartment from soma
+    # calculate distance of compartment from soma
     if isinstance(where, (moose.Compartment, moose.ZombieCompartment)):
-        dist,name = get_dist_name(where)
+        dist, name = get_dist_name(where)
 
     from collections import OrderedDict as od
-    ordered_map=od(sorted(mapping.items(),key=lambda x:len(x[0]),reverse=True))
-    result=None
+    ordered_map = od(sorted(mapping.items(), key=lambda x: len(x[0]), reverse=True))
+    result = None
     for k, value in ordered_map.items():
-        #print('k,v',k,value)
+        # print('k,v',k,value)
         if len(k) == 3:
             min_dist, max_dist, description = k
         elif len(k) == 2:
             min_dist, max_dist = k
-            description=''
+            description = ''
         else:
             continue
         if min_dist <= dist < max_dist:
             if description:
-                #name.startswith allows using swc files with _1 as soma, _2 as apical dend, _3 as basal dend and _4 as axon
+                # name.startswith allows using swc files with _1 as soma, _2 as apical dend, _3 as basal dend and _4 as axon
                 if name.startswith(description) or name.endswith(description):
                     result = value
                     break
             else:
                 result = value
                 break
-    #print('##########', comp.name,'at',dist,'=',result)
+    # print('##########', comp.name,'at',dist,'=',result)
     if not result:
         return 0
 
@@ -98,10 +105,11 @@ def distance_mapping(mapping, where):
         return result
     elif isinstance(result, list):
         return result
-    elif isinstance(result, dict): #Used for calcium buffer and pump dictionaries
+    elif isinstance(result, dict):  # Used for calcium buffer and pump dictionaries
         return result
-    #otherwise, calculate distance dependent function.
+    # otherwise, calculate distance dependent function.
     return result(dist)
+
 
 try:
     from __builtin__ import execfile
@@ -109,10 +117,13 @@ except ImportError:
     def execfile(fn):
         exec(compile(open(fn).read(), fn, 'exec'))
 
+
 def _itemsetter(index):
     def helper(where, value):
         where[index] = value
+
     return helper
+
 
 _class_template = '''\
 class {typename}(list):
@@ -138,6 +149,7 @@ _field_template = '''\
                        doc='Alias for field number {index:d}')
 '''
 
+
 def NamedList(typename, field_names, verbose=False):
     "Returns a new subclass of list with named fields."
 
@@ -149,14 +161,14 @@ def NamedList(typename, field_names, verbose=False):
 
     # Fill-in the class template
     class_definition = _class_template.format(
-        typename = typename,
-        num_fields = len(field_names),
-        init_args = ', '.join(init_args),
-        arg_list = ', '.join(field_names),
-        repr_fmt = ', '.join(_repr_template.format(name=name)
-                             for name in field_names),
-        field_defs = '\n'.join(_field_template.format(index=index, name=name)
-                               for index, name in enumerate(field_names))
+        typename=typename,
+        num_fields=len(field_names),
+        init_args=', '.join(init_args),
+        arg_list=', '.join(field_names),
+        repr_fmt=', '.join(_repr_template.format(name=name)
+                           for name in field_names),
+        field_defs='\n'.join(_field_template.format(index=index, name=name)
+                             for index, name in enumerate(field_names))
     )
     if verbose:
         print(class_definition)
@@ -179,6 +191,7 @@ def NamedList(typename, field_names, verbose=False):
         pass
 
     return result
+
 
 class NamedDict(dict):
     """Creates a python dict with a name and attribute access of keys.
@@ -210,14 +223,14 @@ class NamedDict(dict):
         self.__name__ = name
 
     def __repr__(self):
-        items = ('{}={}'.format(k,v) for (k,v) in self.items())
+        items = ('{}={}'.format(k, v) for (k, v) in self.items())
         l = len(self.__name__) + 1
-        sep = ',\n' + ' '*l
+        sep = ',\n' + ' ' * l
         return '{}({})'.format(self.__name__, sep.join(items))
 
     def __setitem__(self, k, v):
-        super(NamedDict, self).__setitem__(k,v)
-        setattr(self,k,v)
+        super(NamedDict, self).__setitem__(k, v)
+        setattr(self, k, v)
 
     def __getattribute__(self, k):
         # attributes have higher priority
@@ -227,9 +240,9 @@ class NamedDict(dict):
             return super(NamedDict, self).__getitem__(k)
 
     def __setattr__(self, k, v):
-        super(NamedDict, self).__setattr__(k,v)
+        super(NamedDict, self).__setattr__(k, v)
         if not k.startswith('_'):
-            super(NamedDict, self).__setitem__(k,v)
+            super(NamedDict, self).__setitem__(k, v)
 
     def __dir__(self):
         dirlist = super(NamedDict, self).__dir__()
@@ -245,6 +258,7 @@ def block_if_noninteractive():
         except KeyboardInterrupt:
             pass
 
+
 def find_file(name, *paths):
     if not _os.path.isabs(name):
         for path in paths:
@@ -253,25 +267,30 @@ def find_file(name, *paths):
                 return p
     return name
 
+
 def find_model_file(model, name):
     return find_file(name, _os.path.dirname(model.__file__))
+
 
 def listize(func):
     def wrapper(*args, **kwargs):
         return list(func(*args, **kwargs))
+
     return functools.update_wrapper(wrapper, func)
 
 
 def call_counter(func):
     '''Decorator to count number of times a function has been called'''
-    def wrapper(*args,**kwargs):
+
+    def wrapper(*args, **kwargs):
         try:
             wrapper.calls += 1
-            return func(*args,**kwargs)
-        except Exception as E: # Fixes count if there's an exception
+            return func(*args, **kwargs)
+        except Exception as E:  # Fixes count if there's an exception
             wrapper.calls += -1
             raise E
-            return func(*args,**kwargs)
+            return func(*args, **kwargs)
+
     wrapper.calls = 0
     return functools.update_wrapper(wrapper, func)
 
@@ -297,8 +316,8 @@ def gitlog(model):
     gitStagedDiff = check_output(['git', '-C', gitRepoPath, 'diff-index', '-p',
                                   '--cached', 'HEAD', '--']).decode(enc)
 
-    #print(gitRepoPath, gitCurrentCommitHash, gitUnstagedDiff, gitStagedDiff)
-    return '\n'.join(['Git Repo Path of model: '+gitRepoPath + '\n',
-                      'Current Git Commit Hash: '+gitCurrentCommitHash + '\n',
-                      'Unstaged Git Differences: \n' + gitUnstagedDiff +'\n',
+    # print(gitRepoPath, gitCurrentCommitHash, gitUnstagedDiff, gitStagedDiff)
+    return '\n'.join(['Git Repo Path of model: ' + gitRepoPath + '\n',
+                      'Current Git Commit Hash: ' + gitCurrentCommitHash + '\n',
+                      'Unstaged Git Differences: \n' + gitUnstagedDiff + '\n',
                       'Staged Git Differences: \n' + gitStagedDiff])

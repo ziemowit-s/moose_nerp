@@ -1,22 +1,24 @@
 import moose
-from moose_nerp.prototypes import (cell_proto,
-                     create_network,
-                     inject_func,
-                     tables)
-from moose_nerp import (d1d2, str_net)
-
 import pytest
+
+from moose_nerp import (d1d2, str_net)
+from moose_nerp.prototypes import (cell_proto,
+                                   create_network,
+                                   inject_func,
+                                   tables)
+
 
 @pytest.yield_fixture
 def remove_objects():
-    print ("setup before yield")
+    print("setup before yield")
     yield
-    print ("teardown after yield")
+    print("teardown after yield")
     for i in ('/data', '/pulse', '/D1', '/D2', '/library'):
         try:
             moose.delete(i)
         except ValueError:
             pass
+
 
 @pytest.mark.parametrize("calcium", ["", "calcium"])
 @pytest.mark.parametrize("synapses", ["", "synapses"])
@@ -37,7 +39,7 @@ def test_single_injection(calcium, synapses, spines, ghk, plasticity):
     d1d2.synYN = bool(synapses)
 
     MSNsyn, neurons = cell_proto.neuronclasses(d1d2)
-    neuron_paths = {ntype:[neuron.path]
+    neuron_paths = {ntype: [neuron.path]
                     for ntype, neuron in neurons.items()}
     pg = inject_func.setupinj(d1d2, 0.02, 0.01, neuron_paths)
     pg.firstLevel = 1e-8
@@ -64,6 +66,7 @@ def test_single_injection(calcium, synapses, spines, ghk, plasticity):
     assert -0.01 < vm1[499] < 0.05
     assert -0.01 < vm2[499] < 0.05
 
+
 @pytest.mark.parametrize("calcium", ["", "calcium"])
 @pytest.mark.parametrize("synapses", ["", "synapses"])
 @pytest.mark.parametrize("spines", ["", "spines"])
@@ -74,7 +77,7 @@ def test_single_injection(calcium, synapses, spines, ghk, plasticity):
 def test_net_injection(calcium, synapses, spines, single, ghk, plasticity):
     "Create the neuron and run a very short simulation"
 
-    #pytest.skip("skipping network tests")
+    # pytest.skip("skipping network tests")
 
     if ghk and not hasattr(moose, 'GHK'):
         pytest.skip("GHK is missing")
@@ -91,7 +94,7 @@ def test_net_injection(calcium, synapses, spines, single, ghk, plasticity):
 
     MSNsyn, neurons = cell_proto.neuronclasses(d1d2)
 
-    population,connection, plas = create_network.create_network(d1d2, str_net, neurons)
+    population, connection, plas = create_network.create_network(d1d2, str_net, neurons)
 
     pg = inject_func.setupinj(d1d2, 0.02, 0.01, population['pop'])
     pg.firstLevel = 1e-9

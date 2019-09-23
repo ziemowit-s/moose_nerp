@@ -2,6 +2,7 @@
 
 from moose_nerp.prototypes.iso_scaling import iso_scaling
 
+
 def test_iso_scaling():
     assert iso_scaling([0]) == (u'', 1)
     assert iso_scaling([999]) == (u'', 1)

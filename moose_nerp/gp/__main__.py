@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
-#1. repeat optimizations with fixed Buffer Capacity.
-#2. use helpers to copy parameters into param_cond
-#3. run single neuron simulations to verify
-#4. run network simulations (single = True, then False) with and without ethanol - prelim
+# 1. repeat optimizations with fixed Buffer Capacity.
+# 2. use helpers to copy parameters into param_cond
+# 3. run single neuron simulations to verify
+# 4. run network simulations (single = True, then False) with and without ethanol - prelim
 ####################
 ## Code to create two globus pallidus neurons
 ##      using dictionaries for channels and synapses
@@ -12,13 +12,16 @@
 ##      used to tune parameters and channel kinetics (but using larger morphology)
 
 from __future__ import print_function, division
+
 from moose_nerp import gp as model
+
 '''Evaluates moose_nerp/gp/__init__.py to load all the parameters, e.g.
 param_sim.py, param_ca_plas.py, param_chan.py, param_cond.py, param_sim.py, etc.
 into the model namespace. These parameters are then accessible by, e.g.,
 `model.param_sim.fname`.
 '''
 from moose_nerp.prototypes import create_model_sim
+
 '''Imports functions for setting up and simulating model. These take the `model`
 namespace as argument, and append variables to this namespace. Thus, after
 running a simulation, the output tables would be accessible as model.vmtab,
@@ -59,7 +62,7 @@ create_model_sim.runAll(model)
 # with new options that do not alter the current state of the functions unless
 # the new options are explicitly called.
 
-#dat=pickle.load(open('params.pickle','rb'))
+# dat=pickle.load(open('params.pickle','rb'))
 '''
 import numpy as np
 from matplotlib import pyplot as plt

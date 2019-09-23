@@ -18,6 +18,7 @@ do: model.spinesYN = True (Default is set in param_model_defaults).
 from __future__ import print_function, division
 
 from moose_nerp import d1opt as model
+
 '''Evaluates moose_nerp/d1d2/__init__.py to load all the parameters, e.g.
 param_sim.py, param_ca_plas.py, param_chan.py, param_cond.py, param_sim.py, etc.
 into the model namespace. These parameters are then accessible by, e.g.,
@@ -25,17 +26,18 @@ into the model namespace. These parameters are then accessible by, e.g.,
 '''
 
 from moose_nerp.prototypes import create_model_sim
+
 '''Imports functions for setting up and simulating model. These take the `model`
 namespace as argument, and append variables to this namespace. Thus, after
 running a simulation, the output tables would be accessible as model.vmtab,
 model.catab, etc.'''
 
 # Parameter overrides can be specified:
-model.spineYN=True
-model.calYN=True
-model.plasYN = False#True
+model.spineYN = True
+model.calYN = True
+model.plasYN = False  # True
 model.synYN = True
-#for k,v in model.param_ca_plas.CaShellModeDensity.items():
+# for k,v in model.param_ca_plas.CaShellModeDensity.items():
 #    model.param_ca_plas.CaShellModeDensity[k] = model.param_ca_plas.SHELL
 
 # This function sets up the options specified in param_sim or passed from

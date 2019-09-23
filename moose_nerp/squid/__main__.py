@@ -9,7 +9,9 @@
 ##      used to tune parameters and channel kinetics (but using larger morphology)
 
 from __future__ import print_function, division
+
 from moose_nerp import squid as model
+
 '''Evaluates moose_nerp/squid/__init__.py to load all the parameters, e.g.
 param_sim.py, param_ca_plas.py, param_chan.py, param_cond.py, param_sim.py, etc.
 into the model namespace. These parameters are then accessible by, e.g.,
@@ -17,6 +19,7 @@ into the model namespace. These parameters are then accessible by, e.g.,
 '''
 
 from moose_nerp.prototypes import create_model_sim
+
 '''Imports functions for setting up and simulating model. These take the `model`
 namespace as argument, and append variables to this namespace. Thus, after
 running a simulation, the output tables would be accessible as model.vmtab,
